@@ -40,11 +40,22 @@
       notify: Reload Apache
 
   # MySQL Configuration
-    - name: Sets the root password
+    - name: MySQL - Update mysql root passwd
       mysql_user:
-        name: root
-        password: "{{ mysql_root_password }}"
+        name: root 
+        host: "{{item}}" 
+        password: "{{mysql_root_password}}"
+        login_user: root
+        login_password: "{{mysql_old_root_password}}"
+        state: present
         login_unix_socket: /var/run/mysqld/mysqld.sock
+      with_items:
+        - "{{app_user}}"
+        - 127.0.0.1
+        - ::1
+        - localhost
+      when: mysql_root_password != mysql_old_root_password and
+            mysql_root_password != ""
 
     - name: Removes all anonymous user accounts
       mysql_user:
@@ -83,4 +94,9 @@
     - name: Restart Apache
       service:
         name: apache2
+        state: restarted
+
+    - name: Restart MySQL
+      service:
+        name: mysql
         state: restarted
